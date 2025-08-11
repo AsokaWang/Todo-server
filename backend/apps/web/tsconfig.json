@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2020",
+      "ESNext",
+      "DOM"
+    ],
+    "module": "ES2020",
+    "target": "ES2020",
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "outDir": "dist",
+    "rootDir": "../../",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "allowImportingTsExtensions": false,
+    "noImplicitAny": false,
+    "types": ["node"]
+  },
+  "include": [
+    "src/index.ts",
+    "src/env.d.ts", 
+    "src/routes/**/*",
+    "../../packages/**/*"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "public": "./public",
+  "rewrites": [
+    {
+      "source": "/api/**",
+      "destination": "http://localhost:3002/api/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "**/*",
+      "headers": [
+        {
+          "key": "X-Served-By",
+          "value": "NaoTodo-Serve"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "**/*.html",
+      "headers": [
+        {
+          "key": "Cache-Control", 
+          "value": "public, max-age=300"
+        }
+      ]
+    }
+  ],
+  "directoryListing": false,
+  "unlisted": [
+    ".env",
+    ".env.*",
+    "node_modules",
+    ".git",
+    "*.log"
+  ]
+}

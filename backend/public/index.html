@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NaoTodo Server - 静态文件服务</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid #007bff;
+        }
+        .status-good { border-left-color: #28a745; }
+        .status-warning { border-left-color: #ffc107; }
+        .status-info { border-left-color: #17a2b8; }
+        code {
+            background: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+        .command-list {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .command-list pre {
+            margin: 0;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 NaoTodo Server</h1>
+        <p>静态文件服务器 - 使用 serve 包提供服务</p>
+    </div>
+
+    <div class="card status-good">
+        <h2>✅ 服务器状态</h2>
+        <p>serve 包已成功安装并运行！</p>
+        <p><strong>版本:</strong> <code>serve ^14.2.4</code></p>
+        <p><strong>端口:</strong> <code>3001</code> (可配置)</p>
+    </div>
+
+    <div class="card status-info">
+        <h2>📋 可用脚本</h2>
+        <p>以下是项目中配置的 serve 相关脚本：</p>
+        <div class="command-list">
+            <pre>
+# 基础 serve 命令
+pnpm run serve
+
+# 静态文件服务 (端口 3001)
+pnpm run serve:static
+
+# 构建产物服务 (端口 3003) 
+pnpm run serve:dist
+
+# 文档服务 (端口 3004, SPA 模式)
+pnpm run serve:docs
+            </pre>
+        </div>
+    </div>
+
+    <div class="card status-warning">
+        <h2>🔧 serve 包功能</h2>
+        <ul>
+            <li><strong>静态文件服务:</strong> 提供 HTML, CSS, JS 等静态资源</li>
+            <li><strong>SPA 支持:</strong> <code>--single</code> 参数支持单页应用</li>
+            <li><strong>CORS 支持:</strong> <code>--cors</code> 启用跨域请求</li>
+            <li><strong>HTTPS 支持:</strong> <code>--ssl-cert</code> 和 <code>--ssl-key</code></li>
+            <li><strong>自定义端口:</strong> <code>-p</code> 或 <code>--listen</code></li>
+            <li><strong>压缩支持:</strong> 自动 gzip 压缩</li>
+            <li><strong>符号链接:</strong> <code>--symlinks</code> 解析符号链接</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>🌐 API 端点</h2>
+        <p>主服务器运行在端口 3002，提供以下端点：</p>
+        <ul>
+            <li><code>GET /</code> - API 信息</li>
+            <li><code>GET /health</code> - 健康检查</li>
+            <li><code>/api/*</code> - 业务 API 端点</li>
+            <li><code>/statics/avatars</code> - 头像静态资源</li>
+        </ul>
+    </div>
+
+    <div class="card status-info">
+        <h2>🛠️ 开发用途</h2>
+        <p>serve 包在 NaoTodo 项目中的主要用途：</p>
+        <ul>
+            <li><strong>开发环境:</strong> 快速启动静态文件服务器</li>
+            <li><strong>构建预览:</strong> 预览构建后的应用</li>
+            <li><strong>文档服务:</strong> 提供项目文档的本地访问</li>
+            <li><strong>资源服务:</strong> 服务上传的文件和图片</li>
+            <li><strong>测试环境:</strong> 模拟生产环境的静态资源服务</li>
+        </ul>
+    </div>
+
+    <footer style="text-align: center; margin-top: 2rem; color: #666;">
+        <p>🎯 NaoTodo Server - 现代化待办任务管理平台</p>
+        <p>Powered by <code>serve</code> package</p>
+    </footer>
+
+    <script>
+        // 简单的状态检查
+        console.log('🚀 NaoTodo Server Static Files - serve 包运行正常');
+        
+        // 检查 API 服务器是否运行
+        fetch('http://localhost:3002/health')
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ API 服务器状态:', data);
+                document.querySelector('.status-good').innerHTML += 
+                    '<p><strong>API 服务器:</strong> <span style="color: #28a745;">运行中 ✅</span></p>';
+            })
+            .catch(err => {
+                console.log('⚠️ API 服务器未运行');
+                document.querySelector('.status-good').innerHTML += 
+                    '<p><strong>API 服务器:</strong> <span style="color: #dc3545;">未运行 ❌</span></p>';
+            });
+    </script>
+</body>
+</html>
