@@ -507,7 +507,7 @@ F12 -> Network -> 刷新页面
 ```
 # 后端启动成功的完整日志示例:
 🚀 正在启动 NaoTodo Server...
-🔌 正在连接 MongoDB: mongodb://111.170.131.53:27017/naotodo
+🔌 正在连接 MongoDB: mongodb://[HOST]:[PORT]/naotodo
 ✅ MongoDB 连接成功: naotodo
 ✅ NaoTodo Server (HTTP) 运行在端口 3002
 🌍 环境: development

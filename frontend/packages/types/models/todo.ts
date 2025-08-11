@@ -7,6 +7,9 @@ import type { Tag } from './tag'
 type TodoDueDate = {
     startAt: string | null
     endAt: string | null
+    startTime?: string | null
+    endTime?: string | null
+    allDay?: boolean
 }
 
 type Todo = {
@@ -119,6 +122,7 @@ type TodoColumnOptions = Partial<{
     state: boolean
     priority: boolean
     tags: boolean
+    startAt: boolean
     endAt: boolean
     createdAt: boolean
     updatedAt: boolean

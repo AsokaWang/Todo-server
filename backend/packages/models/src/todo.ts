@@ -13,6 +13,15 @@ class TodoDueDate {
 
     @prop({ default: null })
     endAt: Date;
+
+    @prop({ default: null })
+    startTime: string;
+
+    @prop({ default: null })
+    endTime: string;
+
+    @prop({ default: true })
+    allDay: boolean;
 }
 
 @index({ userId: 1, projectId: 1 })
@@ -43,7 +52,7 @@ class Todo {
     @prop({ default: [mongoose.Schema.Types.ObjectId], ref: 'Tag' })
     tags: mongoose.Types.ObjectId[];
 
-    @prop({ default: { startAt: null, endAt: null } })
+    @prop({ default: { startAt: null, endAt: null, startTime: null, endTime: null, allDay: true } })
     dueDate: TodoDueDate;
 
     @prop({ default: false })

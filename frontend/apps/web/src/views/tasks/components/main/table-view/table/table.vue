@@ -10,6 +10,9 @@
             <div v-if="columnOptions.updatedAt" class="todo-table__header__col col-updated-at">
                 <order-button prop="updatedAt">更新时间</order-button>
             </div>
+            <div v-if="columnOptions.startAt" class="todo-table__header__col col-start-at">
+                <order-button prop="startAt">开始时间</order-button>
+            </div>
             <div v-if="columnOptions.endAt" class="todo-table__header__col col-end-at">
                 <order-button prop="endAt">结束时间</order-button>
             </div>
@@ -89,6 +92,15 @@
                 >
                     <nue-text :title="useRelativeDate(todo.updatedAt)" size="var(--text-xs)">
                         {{ useRelativeDate(todo.updatedAt) }}
+                    </nue-text>
+                </nue-div>
+                <nue-div
+                    v-if="columnOptions.startAt"
+                    :key="refreshKey"
+                    class="todo-table__main__col col-start-at"
+                >
+                    <nue-text :title="useRelativeDate(todo.dueDate.startAt)" size="var(--text-xs)">
+                        {{ useRelativeDate(todo.dueDate.startAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div

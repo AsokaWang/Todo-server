@@ -1,236 +1,316 @@
 <template>
-    <div class="calendar">
+    <div class="calendar-container">
         <!-- 日历头部 -->
-        <div class="calendar-header">
-            <!-- 年份和月份标题 -->
-            <div class="calendar-title">{{ year }}年 {{ month }}月</div>
-            <!-- 年月调整栏 -->
-            <div class="calendar-controls">
-                <button @click="prevMonth">上一月</button>
-                <button @click="nextMonth">下一月</button>
-            </div>
+        <CalendarHeader
+            :view-type="calendarStore.viewType"
+            :title="calendarStore.navigation.title"
+            :loading="calendarStore.isLoading"
+            @view-change="handleViewChange"
+            @prev="calendarStore.goToPrev"
+            @next="calendarStore.goToNext"
+            @today="calendarStore.goToToday"
+            @refresh="calendarStore.refresh"
+            @add-event="handleAddEvent"
+        />
+
+        <!-- 日历内容区域 -->
+        <div class="calendar-content">
+            <!-- 月视图 -->
+            <MonthView
+                v-if="calendarStore.viewType === 'month'"
+                :current-date="calendarStore.currentDate"
+                :selected-date="calendarStore.selectedDate"
+                :events="calendarStore.events"
+                @date-click="handleDateClick"
+                @event-click="handleEventClick"
+                @show-more-events="handleShowMoreEvents"
+                @add-event="handleAddEvent"
+            />
+
+            <!-- 周视图 -->
+            <WeekView
+                v-else-if="calendarStore.viewType === 'week'"
+                :current-date="calendarStore.currentDate"
+                :selected-date="calendarStore.selectedDate"
+                :events="calendarStore.events"
+                @day-click="handleDayClick"
+                @hour-click="handleHourClick"
+                @event-click="handleEventClick"
+            />
+
+            <!-- 日视图 -->
+            <DayView
+                v-else-if="calendarStore.viewType === 'day'"
+                :current-date="calendarStore.currentDate"
+                :events="calendarStore.selectedDateEvents"
+                @hour-click="handleHourClick"
+                @event-click="handleEventClick"
+            />
         </div>
-        <!-- 日历主体 -->
-        <div class="calendar-body">
-            <!-- 星期表头 -->
-            <div class="calendar-weekdays">
-                <div v-for="day in weekdays" :key="day">{{ day }}</div>
-            </div>
-            <!-- 日期宫格 -->
-            <div class="calendar-days">
-                <div v-for="(day, index) in days" :key="index" class="calendar-day">
-                    <div class="day-number">{{ day.day }}</div>
-                    <!-- 任务展示 -->
-                    <div
-                        v-for="task in getTasksForDay(day)"
-                        :key="task.id"
-                        :class="['task', { 'multi-day-task': task.endDate }]"
-                        :style="{ gridColumn: getGridColumnSpan(task, day), zIndex: task.zIndex }"
-                    >
-                        {{ task.title }}
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        <!-- 事件详情弹窗 -->
+        <EventDetailDialog
+            v-if="showEventDetail"
+            :event="selectedEvent"
+            @close="handleCloseEventDetail"
+            @edit="handleEditEvent"
+            @delete="handleDeleteEvent"
+        />
+
+        <!-- 添加事件弹窗 -->
+        <AddEventDialog
+            v-if="showAddEvent"
+            :default-date="defaultEventDate"
+            :default-time="defaultEventTime"
+            @close="handleCloseAddEvent"
+            @save="handleSaveEvent"
+        />
+
+        <!-- 编辑事件弹窗 -->
+        <EditEventDialog
+            v-if="showEditEvent && editEvent"
+            :event="editEvent"
+            @close="handleCloseEditEvent"
+            @save="handleSaveEditEvent"
+        />
     </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
+import { NueMessage } from 'nue-ui'
+import CalendarHeader from './components/CalendarHeader.vue'
+import MonthView from './components/MonthView.vue'
+import WeekView from './components/WeekView.vue'
+import DayView from './components/DayView.vue'
+import EventDetailDialog from './components/EventDetailDialog.vue'
+import AddEventDialog from './components/AddEventDialog.vue'
+import EditEventDialog from './components/EditEventDialog.vue'
+import { useCalendarStore } from './composables/use-calendar-store'
+import { useTodoStore } from '../../stores/use-todo-store'
+import { useViewStore } from '../../stores/use-view-store'
+import type { CalendarViewType, CalendarEvent, CalendarDate } from './types'
 
-// 初始化日期
-const currentDate = ref(new Date())
-const year = computed(() => currentDate.value.getFullYear())
-const month = computed(() => currentDate.value.getMonth() + 1)
+// 使用日历存储和待办存储
+const calendarStore = useCalendarStore()
+const todoStore = useTodoStore()
+const viewStore = useViewStore()
 
-// 星期表头
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+// 弹窗状态
+const showEventDetail = ref(false)
+const showAddEvent = ref(false)
+const showEditEvent = ref(false)
+const selectedEvent = ref<CalendarEvent | null>(null)
+const editEvent = ref<CalendarEvent | null>(null)
+const defaultEventDate = ref<Date | null>(null)
+const defaultEventTime = ref<number | null>(null)
 
-// 获取当前月的天数
-const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month, 0).getDate()
+// 处理视图类型变更
+function handleViewChange(viewType: CalendarViewType) {
+    calendarStore.setViewType(viewType)
 }
 
-// 获取当前月的第一天是星期几
-const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month - 1, 1).getDay()
-}
-
-// 生成当前月的日期数组
-const days = computed(() => {
-    const firstDay = getFirstDayOfMonth(year.value, month.value)
-    const daysInMonth = getDaysInMonth(year.value, month.value)
-    const daysArray = []
-
-    // 填充前面的空白
-    for (let i = 0; i < firstDay; i++) {
-        daysArray.push({ day: null })
+// 处理日期点击（月视图）
+function handleDateClick(date: Date) {
+    calendarStore.setSelectedDate(date)
+    if (calendarStore.viewType === 'month') {
+        // 从月视图切换到日视图
+        calendarStore.setCurrentDate(date)
+        calendarStore.setViewType('day')
     }
+}
 
-    // 填充当前月的日期
-    for (let i = 1; i <= daysInMonth; i++) {
-        daysArray.push({ day: i })
+// 处理天点击（周视图）
+function handleDayClick(date: Date) {
+    calendarStore.setSelectedDate(date)
+    calendarStore.setCurrentDate(date)
+    calendarStore.setViewType('day')
+}
+
+// 处理小时点击
+function handleHourClick(date: Date, hour?: number) {
+    handleAddEvent(date, hour)
+}
+
+// 处理事件点击
+function handleEventClick(event: CalendarEvent) {
+    selectedEvent.value = event
+    showEventDetail.value = true
+}
+
+// 处理显示更多事件
+function handleShowMoreEvents(date: CalendarDate) {
+    calendarStore.setSelectedDate(date.date)
+    calendarStore.setCurrentDate(date.date)
+    calendarStore.setViewType('day')
+}
+
+// 处理添加事件
+function handleAddEvent(date?: Date, hour?: number) {
+    defaultEventDate.value = date || calendarStore.currentDate
+    defaultEventTime.value = hour ?? null
+    showAddEvent.value = true
+    // 临时隐藏任务详情面板以避免UI冲突
+    if (viewStore.tasksOutlineVisible) {
+        viewStore.tasksOutlineVisible = false
     }
-
-    return daysArray
-})
-
-// 切换月份
-const prevMonth = () => {
-    currentDate.value = new Date(year.value, month.value - 2, 1)
 }
 
-const nextMonth = () => {
-    currentDate.value = new Date(year.value, month.value, 1)
+// 处理关闭事件详情
+function handleCloseEventDetail() {
+    showEventDetail.value = false
+    selectedEvent.value = null
 }
 
-// 模拟任务数据，添加 endDate 字段表示任务结束日期
-const tasks = ref([
-    { id: 1, startDate: '2025-03-05', endDate: '2025-03-07', title: '任务1' },
-    { id: 2, startDate: '2025-03-10', endDate: null, title: '任务2' },
-    { id: 3, startDate: '2025-03-10', endDate: '2025-03-12', title: '任务3' },
-    { id: 4, startDate: '2025-03-05', endDate: '2025-03-10', title: '任务4' }
-])
+// 处理编辑事件
+function handleEditEvent(event: CalendarEvent) {
+    editEvent.value = event
+    showEditEvent.value = true
+    // 临时隐藏任务详情面板以避免UI冲突
+    if (viewStore.tasksOutlineVisible) {
+        viewStore.tasksOutlineVisible = false
+    }
+    handleCloseEventDetail()
+}
 
-// 获取指定日期的任务
-const getTasksForDay = (day: { day: number | null }) => {
-    if (!day.day) return []
-    const date = `${year.value}-${month.value.toString().padStart(2, '0')}-${day.day.toString().padStart(2, '0')}`
-    const tasksForDay = tasks.value.filter((task) => {
-        if (task.endDate) {
-            return date >= task.startDate && date <= task.endDate
+// 处理删除事件
+async function handleDeleteEvent(event: CalendarEvent) {
+    try {
+        // 软删除待办任务
+        const success = await todoStore.deleteTodoWithConfirmation(event.id as string)
+        
+        if (success) {
+            NueMessage.success('任务已删除')
+            calendarStore.refresh()
         }
-        return task.startDate === date
-    })
-    // 按任务 ID 排序，确保顺序展示
-    return tasksForDay
-        .sort((a, b) => a.id - b.id)
-        .map((task, index) => ({
-            ...task,
-            // 为每个任务添加层级信息
-            zIndex: index + 1
-        }))
+    } catch (error) {
+        console.error('Failed to delete todo:', error)
+        NueMessage.error('任务删除失败')
+    }
+    
+    handleCloseEventDetail()
 }
 
-// 计算多日任务的列跨度
-const getGridColumnSpan = (task: any, day: { day: number | null }) => {
-    if (!task.endDate || !day.day) return '1'
-    const startDay = new Date(task.startDate).getDate()
-    const endDay = new Date(task.endDate).getDate()
-    const currentDay = day.day
-    if (currentDay === startDay) {
-        return `${endDay - startDay + 1}`
-    }
-    if (currentDay > startDay && currentDay <= endDay) {
-        return '0' // 中间日期不占用列
-    }
-    return '1'
+// 处理关闭添加事件
+function handleCloseAddEvent() {
+    showAddEvent.value = false
+    defaultEventDate.value = null
+    defaultEventTime.value = null
 }
+
+// 处理关闭编辑事件
+function handleCloseEditEvent() {
+    showEditEvent.value = false
+    editEvent.value = null
+}
+
+// 处理保存事件
+async function handleSaveEvent(eventData: any) {
+    try {
+        // 构建待办任务数据
+        const todoOptions = {
+            name: eventData.title,
+            description: eventData.description || '',
+            state: eventData.state || 'todo',
+            priority: eventData.priority || 'medium',
+            dueDate: {
+                startAt: eventData.startDate,
+                endAt: eventData.endDate || null,
+                startTime: eventData.startTime || null,
+                endTime: eventData.endTime || null,
+                allDay: eventData.allDay !== false
+            }
+        }
+        
+        // 创建待办任务
+        const newTodo = await todoStore.doCreateTodo(todoOptions, true)
+        
+        if (newTodo) {
+            NueMessage.success('任务已创建')
+        } else {
+            NueMessage.error('任务创建失败')
+        }
+    } catch (error) {
+        console.error('Failed to create todo:', error)
+        NueMessage.error('任务创建失败')
+    }
+    
+    handleCloseAddEvent()
+    calendarStore.refresh()
+}
+
+// 处理编辑保存事件
+async function handleSaveEditEvent(eventData: any) {
+    try {
+        // 构建更新数据
+        const updateOptions = {
+            name: eventData.title,
+            description: eventData.description || '',
+            state: eventData.state || 'todo',
+            priority: eventData.priority || 'medium',
+            dueDate: {
+                startAt: eventData.startDate,
+                endAt: eventData.endDate || null,
+                startTime: eventData.startTime || null,
+                endTime: eventData.endTime || null,
+                allDay: eventData.allDay !== false
+            }
+        }
+        
+        // 更新待办任务
+        const success = await todoStore.doUpdateTodo(eventData.id as string, updateOptions)
+        
+        if (success) {
+            NueMessage.success('任务已更新')
+        } else {
+            NueMessage.error('任务更新失败')
+        }
+    } catch (error) {
+        console.error('Failed to update todo:', error)
+        NueMessage.error('任务更新失败')
+    }
+    
+    handleCloseEditEvent()
+    calendarStore.refresh()
+}
+
+// 初始化
+onMounted(() => {
+    calendarStore.initialize()
+})
 </script>
 
 <style scoped>
-/* 已有样式保持不变 */
-.calendar {
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-    width: 100%;
-}
-.calendar-header {
+.calendar-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    background-color: #e5f6ff;
-    border-radius: 4px;
-}
-.calendar-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #333;
-}
-.calendar-controls {
-    display: flex;
-    gap: 10px;
-}
-.calendar-controls button {
-    padding: 6px 12px;
-    background-color: #d3e8ff;
-    border: none;
-    border-radius: 4px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-.calendar-controls button:hover {
-    background-color: #b3d7ff;
-}
-.calendar-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 10px;
-    background-color: #f1f5f9;
-    padding: 8px 10px;
-    border-radius: 4px;
-}
-.calendar-weekdays div {
-    text-align: center;
-    color: #666;
-    font-size: 14px;
-}
-.calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0;
-}
-.calendar-day {
-    background-color: #fff;
-    padding: 8px;
-    min-height: 100px;
-    border-radius: 0;
-    transition: background-color 0.3s ease;
+    flex-direction: column;
+    height: 100vh;
+    background: #f8fafc;
     position: relative;
+    z-index: 1;
 }
-.calendar-day:hover {
-    background-color: #f9fafb;
-}
-.day-number {
-    font-weight: 600;
-    margin-bottom: 3px;
-    color: #333;
-    font-size: 16px;
-}
-.task {
-    background-color: #f3f4f6;
-    padding: 3px 5px;
-    margin-bottom: 2px;
-    border-radius: 0;
-    color: #666;
-    font-size: 12px;
-    white-space: nowrap;
+
+.calendar-content {
+    flex: 1;
+    padding: 16px 20px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    z-index: 2; /* 确保任务显示在多日任务之上 */
-}
-.multi-day-task {
-    grid-column: span 1;
-    background-color: #d3e8ff;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1; /* 多日任务层级低于普通任务 */
     display: flex;
-    align-items: center;
-    height: 1.2em;
-    line-height: 1.2em;
-    white-space: nowrap;
-    overflow: visible;
-    text-overflow: clip;
+    flex-direction: column;
+}
+
+/* 确保确认框在最顶层 */
+:deep(.nue-dialog-overlay) {
+    z-index: 10000 !important;
+}
+
+:deep(.nue-dialog) {
+    z-index: 10001 !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .calendar-content {
+        padding: 8px 12px;
+    }
 }
 </style>

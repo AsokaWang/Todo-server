@@ -16,6 +16,7 @@ const emit = defineEmits<DetailsHeaderEmits>()
             <nue-divider direction="vertical" />
             <todo-date-selector
                 v-model="shadowTodo.dueDate.endAt"
+                button-text="截止时间"
                 @change="(v) => emit('updateTodoEndAt', v)"
             />
         </nue-div>

@@ -107,6 +107,7 @@
 
     .col-created-at,
     .col-updated-at,
+    .col-start-at,
     .col-end-at {
         width: 10%;
 
@@ -197,6 +198,10 @@
 
             .col-updated-at::before {
                 content: '更新时间：';
+            }
+
+            .col-start-at::before {
+                content: '开始时间：';
             }
 
             .col-end-at::before {

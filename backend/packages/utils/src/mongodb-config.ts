@@ -33,7 +33,7 @@ const getEnvConfig = (): EnvConfig => {
   if (typeof process === 'undefined' || !process.env) {
     return {
       NODE_ENV: 'development',
-      MONGODB_URI: 'mongodb://111.170.131.53:27017/naotodo',
+      MONGODB_URI: 'mongodb://localhost:27017/naotodo',
       MONGODB_DB_NAME: 'naotodo',
       MONGODB_MAX_POOL_SIZE: '100',
       MONGODB_MIN_POOL_SIZE: '5',

@@ -50,10 +50,16 @@
                         <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
                     </nue-div>
                 </nue-div>
+                <nue-div v-if="columns?.startAt" align="center" gap="4px">
+                    <nue-icon name="calendar" color="gray" />
+                    <nue-text size="12px" color="gray">
+                        开始 {{ useRelativeDate(todo.dueDate.startAt) }}
+                    </nue-text>
+                </nue-div>
                 <nue-div v-if="columns?.endAt" align="center" gap="4px">
                     <nue-icon name="calendar" color="gray" />
                     <nue-text size="12px" :color="isTodoExpired(todo) ? '#ec5555' : 'gray'">
-                        {{ useRelativeDate(todo.dueDate.endAt) }}
+                        结束 {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div v-if="columns?.project" align="center" gap="4px">

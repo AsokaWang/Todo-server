@@ -21,11 +21,38 @@
                     @select="setProjectInfo"
                 />
             </nue-div>
-            <nue-div align="center">
-                <todo-date-selector v-model="todoData.dueDate.endAt" />
-                <nue-text v-if="todoData.dueDate.endAt" color="gray" size="12px">
-                    {{ useRelativeDate(todoData.dueDate.endAt) }}
-                </nue-text>
+            <nue-div align="stretch" vertical gap="8px">
+                <nue-text size="14px" weight="500" color="gray">时间设置</nue-text>
+                <nue-div align="stretch" vertical gap="8px">
+                    <nue-div align="center" gap="8px" wrap="nowrap">
+                        <nue-text size="12px" color="gray" style="min-width: 40px;">开始:</nue-text>
+                        <todo-date-selector 
+                            v-model="todoData.dueDate.startAt" 
+                            button-text="设置开始时间"
+                        />
+                    </nue-div>
+                    <nue-div v-if="todoData.dueDate.startAt" align="center" gap="8px">
+                        <nue-div style="min-width: 40px;"></nue-div>
+                        <nue-text color="gray" size="12px">
+                            {{ useRelativeDate(todoData.dueDate.startAt) }}
+                        </nue-text>
+                    </nue-div>
+                </nue-div>
+                <nue-div align="stretch" vertical gap="8px">
+                    <nue-div align="center" gap="8px" wrap="nowrap">
+                        <nue-text size="12px" color="gray" style="min-width: 40px;">结束:</nue-text>
+                        <todo-date-selector 
+                            v-model="todoData.dueDate.endAt" 
+                            button-text="设置结束时间"
+                        />
+                    </nue-div>
+                    <nue-div v-if="todoData.dueDate.endAt" align="center" gap="8px">
+                        <nue-div style="min-width: 40px;"></nue-div>
+                        <nue-text color="gray" size="12px">
+                            {{ useRelativeDate(todoData.dueDate.endAt) }}
+                        </nue-text>
+                    </nue-div>
+                </nue-div>
             </nue-div>
             <todo-tag-bar
                 :clamped="5"
@@ -56,7 +83,13 @@ const props = defineProps<TodoCreatorProps>()
 const setMoreData = ref(true)
 const todoData = reactive<CreateTodoOptions>({
     name: '',
-    dueDate: { endAt: null },
+    dueDate: { 
+        startAt: null, 
+        endAt: null,
+        startTime: null,
+        endTime: null,
+        allDay: true
+    },
     priority: 'low',
     state: 'todo',
     projectId: '',
@@ -75,7 +108,13 @@ const handleUpdateTags = (tags: string[]) => {
 
 const handleClearData = () => {
     todoData.name = ''
-    todoData.dueDate = { endAt: '' }
+    todoData.dueDate = { 
+        startAt: null, 
+        endAt: null,
+        startTime: null,
+        endTime: null,
+        allDay: true
+    }
     todoData.priority = 'low'
     todoData.state = 'todo'
     todoData.projectId = ''

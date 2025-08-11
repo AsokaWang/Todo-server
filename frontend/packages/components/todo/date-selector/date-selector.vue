@@ -9,7 +9,7 @@
             />
             <nue-button icon="clear" theme="small,pure" @click="dateMoment = null" />
         </nue-div>
-        <nue-button v-else theme="small" @click="handleAddDateByNow">设置结束时间</nue-button>
+        <nue-button v-else theme="small" @click="handleAddDateByNow">{{ buttonText }}</nue-button>
     </nue-div>
 </template>
 
@@ -22,11 +22,14 @@ defineOptions({ name: 'TodoDateSelector' })
 const props = defineProps<{
     modelValue?: string | null
     date?: Date | string | null
+    buttonText?: string
 }>()
 const emit = defineEmits<{
     (event: 'update:modelValue', value: string | null): void
     (event: 'change', value: string | null): void
 }>()
+
+const buttonText = computed(() => props.buttonText || '设置结束时间')
 
 const dateMoment = computed<string | null>({
     get() {
@@ -53,6 +56,7 @@ const handleAddDateByNow = () => {
 
 <style scoped>
 .date-selector {
+    min-width: 180px; /* 确保足够宽度显示日期时间 */
     width: fit-content;
     align-items: center;
     gap: 4px;
@@ -70,9 +74,11 @@ const handleAddDateByNow = () => {
     border-radius: var(--primary-radius);
     border: 1px solid var(--divider-color);
     box-shadow: var(--secondary-shadow);
+    min-width: 160px; /* 确保输入框宽度 */
 }
 
 .date-selector .nue-input--noshape {
     padding: 0;
+    min-width: 140px; /* 输入框本身的最小宽度 */
 }
 </style>

@@ -50,6 +50,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         state: true,
         priority: true,
         project: true,
+        startAt: true,
         endAt: true,
         description: true,
         createdAt: false,

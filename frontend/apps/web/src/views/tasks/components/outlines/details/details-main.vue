@@ -3,11 +3,13 @@ import { useMoment } from '@nao-todo/utils'
 import {
     CommentCreator,
     SwitchButton,
+    TodoDateSelector,
     TodoPrioritySelectOptions,
     TodoSelector,
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
+import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import { DetailsRow, DetailsMainComments, DetailsMainEvents } from '.'
 import { useTagStore } from '@/stores'
 import type { DetailsMainEmits, DetailsMainProps } from './types'
@@ -83,6 +85,34 @@ const formatDate = (dateString: string) => {
                     <details-main-events :todo-id="shadowTodo.id" />
                 </nue-div>
                 <nue-div style="padding: 16px" vertical>
+                    <!-- 时间设置区域 -->
+                    <nue-div align="stretch" vertical gap="8px" style="margin-bottom: 16px;">
+                        <nue-text size="14px" weight="500" color="gray">时间设置</nue-text>
+                        <nue-div align="center" gap="8px">
+                            <nue-text size="12px" color="gray" style="width: 48px;">开始:</nue-text>
+                            <todo-date-selector 
+                                v-model="shadowTodo.dueDate.startAt" 
+                                button-text="设置开始时间"
+                                @change="emit('update')"
+                            />
+                            <nue-text v-if="shadowTodo.dueDate?.startAt" color="gray" size="12px">
+                                {{ useRelativeDate(shadowTodo.dueDate.startAt) }}
+                            </nue-text>
+                        </nue-div>
+                        <nue-div align="center" gap="8px">
+                            <nue-text size="12px" color="gray" style="width: 48px;">结束:</nue-text>
+                            <todo-date-selector 
+                                v-model="shadowTodo.dueDate.endAt" 
+                                button-text="设置结束时间"
+                                @change="emit('update')"
+                            />
+                            <nue-text v-if="shadowTodo.dueDate?.endAt" color="gray" size="12px">
+                                {{ useRelativeDate(shadowTodo.dueDate.endAt) }}
+                            </nue-text>
+                        </nue-div>
+                    </nue-div>
+                    
+                    <!-- 标签设置区域 -->
                     <todo-tag-bar
                         :tags="tagStore.tags"
                         :todo-tags="shadowTodo.tags"
@@ -106,6 +136,18 @@ const formatDate = (dateString: string) => {
                         :text="eventsProgress.text"
                         flex="1"
                         label="检查事项进度"
+                    />
+                    <details-row
+                        v-if="shadowTodo.dueDate?.startAt"
+                        :text="formatDate(shadowTodo.dueDate.startAt)"
+                        flex="1"
+                        label="开始时间"
+                    />
+                    <details-row
+                        v-if="shadowTodo.dueDate?.endAt"
+                        :text="formatDate(shadowTodo.dueDate.endAt)"
+                        flex="1"
+                        label="结束时间"
                     />
                     <details-row
                         v-if="shadowTodo.createdAt"

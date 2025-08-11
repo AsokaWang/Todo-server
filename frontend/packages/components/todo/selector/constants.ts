@@ -7,5 +7,6 @@ export const stateOptions = [
 export const priorityOptions = [
     { label: '低优先级', value: 'low', icon: 'priority-1' },
     { label: '中优先级', value: 'medium', icon: 'priority-2' },
-    { label: '高优先级', value: 'high', icon: 'priority-3' }
+    { label: '高优先级', value: 'high', icon: 'priority-3' },
+    { label: '紧急', value: 'urgent', icon: 'priority-4' }
 ]
