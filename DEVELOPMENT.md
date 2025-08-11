@@ -15,7 +15,7 @@
 # 确保安装以下软件
 node --version  # >= 18.0.0
 pnpm --version  # >= 8.0.0
-mongod --version # >= 4.4
+# MongoDB 可选 (项目已配置远程数据库)
 ```
 
 ### 2. 项目设置
@@ -25,28 +25,73 @@ git clone https://github.com/AsokaWang/Todo.git
 cd Todo
 
 # 后端设置
-cd nao-todo-server
+cd backend
 cp .env.example .env
-# 编辑 .env 文件配置必要参数
+# .env 文件已预配置远程MongoDB，可直接使用
 pnpm install
 
 # 前端设置
-cd ../nao-todo
+cd ../frontend
 pnpm install
 ```
 
 ### 3. 启动开发环境
-```bash
-# 终端1: 启动 MongoDB
-mongod
 
-# 终端2: 启动后端服务
-cd nao-todo-server
+#### 方式1: 自动启动（推荐）
+```bash
+# 启动后端服务 (包含自动构建和热重载)
+cd backend
 pnpm run websrv dev
 
-# 终端3: 启动前端应用
-cd nao-todo
-pnpm run webapp dev
+# 启动前端应用 (新终端)
+cd frontend/apps/web
+pnpm dev
+```
+
+#### 方式2: 分步启动
+```bash
+# 终端1: 启动后端服务
+cd backend
+pnpm install                    # 安装依赖
+pnpm run websrv dev            # 启动开发服务器
+
+# 终端2: 启动前端应用
+cd frontend
+pnpm install                    # 安装依赖
+cd apps/web
+pnpm dev                       # 启动Web应用
+
+# 可选: 启动移动端应用
+cd frontend/apps/mobile
+pnpm dev                       # 启动移动端开发环境
+```
+
+### 4. 访问应用
+```bash
+# 前端Web应用
+http://localhost:5173
+
+# 后端API服务
+http://localhost:3002
+
+# 健康检查
+http://localhost:3002/health
+```
+
+### 5. 项目结构说明
+```
+Todo/
+├── backend/                   # 后端服务 (Node.js + Express + MongoDB)
+│   ├── apps/web/             # Web服务器应用
+│   ├── packages/             # 共享包 (APIs, Models, Utils等)
+│   ├── .env                  # 环境配置 (复制自.env.example)
+│   └── pnpm-workspace.yaml   # pnpm工作区配置
+├── frontend/                  # 前端应用 (Vue3 + TypeScript)
+│   ├── apps/web/             # Web应用 (Vite + Vue3)
+│   ├── apps/mobile/          # 移动端应用 (uni-app)
+│   ├── apps/desktop/         # 桌面应用 (Electron)
+│   └── packages/             # 共享包 (Components, Stores等)
+└── CLAUDE.md                 # 项目说明文档
 ```
 
 ## 🔧 MongoDB 配置迁移指南
@@ -279,19 +324,66 @@ GET /
 
 ## 🔍 故障排除
 
-### 常见问题
+### 最新问题及解决方案 (2025-01-11 更新)
 
-#### 1. MongoDB 连接失败
+#### 1. TypeScript 编译错误 - Mongoose 过时选项
+```
+❌ @rollup/plugin-typescript TS2353: Object literal may only specify known properties, and 'new' does not exist in type 'UpdateOptions'
+❌ @rollup/plugin-typescript TS2353: Object literal may only specify known properties, and 'multi' does not exist in type 'UpdateOptions'  
+❌ @rollup/plugin-typescript TS2353: Object literal may only specify known properties, and 'bufferMaxEntries' does not exist in type 'ConnectOptions'
+```
+
+**问题原因：** Mongoose 新版本移除了一些过时的选项
+
+**解决方案：**
+```typescript
+// ❌ 错误的写法
+Session.updateOne({ _id: session._id }, { token: jwt }, { new: true })
+Todo.updateMany({ _id: { $in: ids } }, { $set: updates }, { multi: true })
+
+// ✅ 正确的写法  
+Session.updateOne({ _id: session._id }, { token: jwt })
+Todo.updateMany({ _id: { $in: ids } }, { $set: updates })
+
+// ❌ 错误的MongoDB配置
+bufferMaxEntries: 0,   // 已被移除
+
+// ✅ 正确的MongoDB配置
+bufferCommands: false, // 只保留这一项
+```
+
+#### 2. 环境变量加载问题
+```
+❌ MongoDB 连接失败，但 MONGODB_URI 已在 .env 中设置
+```
+
+**问题原因：** dotenv 路径配置不正确，无法找到 .env 文件
+
+**解决方案：**
+```typescript
+// ❌ 错误的配置
+dotenv.config();
+
+// ✅ 正确的配置 (指定相对路径)
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+```
+
+### 传统问题
+
+#### 3. MongoDB 连接失败
 ```
 ❌ MongoDB 连接失败: MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017
 ```
 
 **解决方案：**
 ```bash
+# 项目已配置远程MongoDB，通常不需要本地MongoDB
+# 如果需要使用本地MongoDB:
+
 # 检查 MongoDB 服务状态
 sudo systemctl status mongod
 
-# 启动 MongoDB 服务
+# 启动 MongoDB 服务  
 sudo systemctl start mongod
 
 # 检查端口是否被占用
@@ -332,7 +424,27 @@ kill -9 <PID>
 echo "PORT=3003" >> .env
 ```
 
-#### 4. CORS 错误
+#### 4. 前端依赖安装问题
+```
+❌ Command failed: pnpm run webapp dev
+❌ sh: 1: vite: not found
+❌ Local package.json exists, but node_modules missing
+```
+
+**问题原因：** 前端依赖未安装或安装不完整
+
+**解决方案：**
+```bash
+# 在前端根目录执行完整的依赖安装
+cd frontend
+pnpm install --timeout 300000  # 增加超时时间
+
+# 确认安装完成后再启动应用
+cd apps/web
+pnpm dev
+```
+
+#### 5. CORS 错误
 ```
 Access to fetch at 'http://localhost:3002/api/...' from origin 'http://localhost:5173' has been blocked by CORS policy
 ```
@@ -356,6 +468,54 @@ DEV_SHOW_MONGOOSE_DEBUG=true pnpm run websrv dev
 启用详细日志：
 ```bash
 LOG_LEVEL=debug pnpm run websrv dev
+```
+
+### ✅ 启动成功验证清单
+
+#### 后端服务验证
+```bash
+# 1. 检查后端服务启动成功
+✅ 控制台显示: "🚀 正在启动 NaoTodo Server..."
+✅ 控制台显示: "✅ MongoDB 连接成功: naotodo"  
+✅ 控制台显示: "✅ NaoTodo Server (HTTP) 运行在端口 3002"
+
+# 2. API健康检查
+curl http://localhost:3002/health
+# 应返回 {"status": "OK", "mongodb": {"connected": true}}
+
+# 3. API根路径检查  
+curl http://localhost:3002
+# 应返回 {"message": "NaoTodo Server API"}
+```
+
+#### 前端应用验证
+```bash
+# 1. 检查前端服务启动成功
+✅ 控制台显示: "VITE v5.x.x ready in xxx ms"
+✅ 控制台显示: "➜  Local:   http://localhost:5173/"
+
+# 2. 访问应用
+打开浏览器访问: http://localhost:5173
+# 应该看到NaoTodo应用界面
+
+# 3. 检查网络请求
+F12 -> Network -> 刷新页面
+# 应该看到成功的API请求到 localhost:3002
+```
+
+#### 常见成功启动日志
+```
+# 后端启动成功的完整日志示例:
+🚀 正在启动 NaoTodo Server...
+🔌 正在连接 MongoDB: mongodb://111.170.131.53:27017/naotodo
+✅ MongoDB 连接成功: naotodo
+✅ NaoTodo Server (HTTP) 运行在端口 3002
+🌍 环境: development
+
+# 前端启动成功的完整日志示例:
+VITE v5.4.19  ready in 387 ms
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
 ```
 
 ### 性能监控

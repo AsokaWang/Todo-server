@@ -16,7 +16,7 @@ import userRoutes from './routes/user';
 import commentRoutes from './routes/comment';
 
 // 加载环境变量
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadDir = path.join(process.env.UPLOAD_PATH || path.join(__dirname, 'avatars'));

@@ -77,7 +77,6 @@ export const createMongoDBConfig = (): MongoDBConfig => {
     
     // 连接管理
     bufferCommands: false, // 禁用 mongoose 缓冲
-    bufferMaxEntries: 0,   // 禁用 mongoose 缓冲
     
     // 写入关注
     retryWrites: true,

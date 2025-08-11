@@ -111,8 +111,7 @@ const updateTodos = async (req: Request, res: Response) => {
         // 更新数据
         const updateResult = await Todo.updateMany(
             { _id: { $in: updateTodoIds } },
-            { $set: updateOptions },
-            { multi: true }
+            { $set: updateOptions }
         ).exec();
 
         // 判断更新结果，返回对应的 JSON 数据

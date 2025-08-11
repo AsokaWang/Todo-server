@@ -71,8 +71,7 @@ const checkin = async (req: Request, res: Response) => {
         // 更新 session 中的 Token
         const updateResult = await Session.updateOne(
             { _id: session._id },
-            { token: jsonWebToken },
-            { new: true }
+            { token: jsonWebToken }
         ).exec();
 
         // 判断更新结果
